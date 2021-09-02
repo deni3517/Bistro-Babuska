@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Babuska</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        margin: 0 auto;
+      }
+      article {
+        width: 280px;
+      }
+
+      img {
+        max-width: 100%;
+      }
+
+      h1 {
+        font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
+        color: red;
+      }
+
+      div h1 {
+        display: flex;
+        justify-content: center;
+      }
+
+      h2,
+      p {
+        padding-left: 10px;
+        padding-right: 10px;
+        font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
+      }
+
+      p {
+        font-size: 12px;
+      }
+
+      article:nth-child(even) {
+        background: rgb(223, 216, 216);
+      }
+
+      article:nth-child(odd) {
+        background: rgb(252, 199, 143);
+      }
+
+      nav {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      button {
+        border-style: none;
+        background-color: rgb(255, 0, 0);
+        color: white;
+        font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
+        width: 15vw;
+        height: 22px;
+        font-size: 15px;
+        cursor: pointer;
+      }
+
+      #popup {
+        display: none;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: #00000099;
+        overflow: scroll;
+        visibility: visible;
+        -webkit-animation: fadeIn 1s;
+        animation: fadeIn 1s;
+      }
+
+      @-webkit-keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      #popup article {
+        width: 70vw;
+        height: auto;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        background-color: rgb(255, 255, 255);
+        border-radius: 15px;
+        grid-template-rows: 30px auto;
+        gap: 10px;
+        padding: 30px;
+      }
+
+      #popup .pris {
+        font-weight: bold;
+      }
+
+      #luk {
+        grid-column: span 2;
+      }
+
+      #luk button {
+        color: rgb(255, 255, 255);
+        background-color: rgb(226, 98, 12);
+        width: 20px;
+        font-size: 12px;
+        cursor: pointer;
+        position: fixed;
+        border-radius: 5px;
+      }
+
+      #popup img {
+        max-width: 100%;
+      }
+
+      #indhold {
+        display: flex;
+        justify-content: center;
+        padding: 30px;
+      }
+
+      /* Add animation (fade in the popup) */
+    </style>
+  </head>
+
+  <body>
+    <header><img src="logo.jpg" alt="logo" /></header>
+
+    <nav>
+      <button data-menukort="alle" class="valgt">Alle</button>
+      <button data-menukort="forretter">Forretter</button>
+      <button data-menukort="hovedretter">Hovedretter</button>
+      <button data-menukort="desserter">Desserter</button>
+      <button data-menukort="drikkevarer">Drikkevarer</button>
+    </nav>
+    <div><h1>Alle</h1></div>
+    <section></section>
+
+    <template>
+      <article>
+        <img src="" alt="" />
+        <h2></h2>
+        <p class="navn"></p>
+        <p class="pris"></p>
+        <p class="kortbeskrivelse"></p>
+      </article>
+    </template>
+
+    <section id="popup">
+    <div id="indhold">  <article>
+        <div id="luk"><button>X</button></div>
+        <div id="billed"><img src="" alt="" /></div>
+        <aside>
+          <h3><span class="navn"></span></h3>
+          <p><span class="pris"></span></p>
+          <p><span class="oprindelsesregion"></span></p>
+          <p><span class="kortbeskrivelse"></span></p>
+          <p><span class="langbeskrivelse"></span></p>
+        </aside></div>
+      </article>
+    </section>
+    <script>
+      let menu;
+      let filter = "alle";
+      let container;
+      let temp;
+
+      const header = document.querySelector("h1");
+      const url = "https://babushka-dd8a.restdb.io/rest/menu";
+      const options = {
+        headers: {
+          "x-apikey": "600ec2fb1346a1524ff12de4",
+        },
+      };
+
+      document.addEventListener("DOMContentLoaded", start);
+      container = document.querySelector("section");
+      temp = document.querySelector("template");
+
+      function start() {
+        const filterKnapper = document.querySelectorAll("nav button");
+        console.log(filterKnapper);
+        filterKnapper.forEach((knap) =>
+          knap.addEventListener("click", filtrerMenu)
+        );
+        hentdata();
+      }
+
+      //eventlistener knyttet til knapperne der vælger hvad for et filter der er aktivt
+      function filtrerMenu() {
+        filter = this.dataset.menukort; //sæt variablet "filter" til værdien af data-troende på den knap der er klikket på
+        console.log(filter);
+        document.querySelector(".valgt").classList.remove("valgt"); //fjern klassen valgt fra den knap
+        this.classList.add("valgt"); //marker den knap der er klikket på
+        vis(); //kald funktionen visPersoner efter det nye filter er sat
+        header.textContent = this.textContent;
+        console.log(filtrerMenu);
+      }
+
+      async function hentdata() {
+        const response = await fetch(url, options);
+        menu = await response.json();
+        vis();
+      }
+
+      function vis() {
+        console.log(menu);
+        container.textContent = ""; //ryd container inden ny loop
+
+        menu.forEach((enMenu) => {
+          console.log("Menukort", enMenu.kategori);
+
+          if (filter == enMenu.kategori || filter == "alle") {
+            let klon = temp.cloneNode(true).content;
+            klon.querySelector("img").src =
+              "billeder/" + enMenu.billednavn + "-md.jpg";
+            klon.querySelector("h2").textContent = enMenu.navn;
+            klon.querySelector(".kortbeskrivelse").textContent =
+              enMenu.kortbeskrivelse;
+            klon.querySelector(".pris").textContent = enMenu.pris + ",-";
+            klon
+              .querySelector("article")
+              .addEventListener("click", () => visDetaljer(enMenu));
+
+            container.appendChild(klon);
+          }
+        });
+      }
+
+      document
+        .querySelector("#popup button")
+        .addEventListener("click", lukPopup);
+
+      function lukPopup() {
+        document.querySelector("#popup").style.display = "none";
+      }
+
+      function visDetaljer(enMenu) {
+        const popup = document.querySelector("#popup");
+        console.log(popup);
+        popup.style.display = "block";
+        popup.querySelector("img").src =
+          "billeder/" + enMenu.billednavn + "-md.jpg";
+        popup.querySelector(".navn").textContent = enMenu.navn;
+        popup.querySelector(".pris").textContent =
+          "Pris: " + enMenu.pris + " kr.";
+        popup.querySelector(".oprindelsesregion").textContent =
+          "Oprindelse: " + enMenu.oprindelsesregion;
+
+        popup.querySelector(".kortbeskrivelse").textContent =
+          enMenu.kortbeskrivelse;
+
+        popup.querySelector(".langbeskrivelse").textContent =
+          enMenu.langbeskrivelse;
+      }
+    </script>
+  </body>
+</html>
